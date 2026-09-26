@@ -60,11 +60,34 @@ h1 {
   cursor: pointer;
 }
 .meta button:disabled, .run:disabled { opacity: 0.6; cursor: wait; }
-.guide {
+.intake, .guide {
   margin: 16px 32px 0;
-  padding: 16px 18px 12px;
+  padding: 16px 18px 18px;
   background: white;
   border-left: 4px solid var(--red);
+}
+.intake h2 { font-size: 22px; }
+.forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+.forms label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.forms textarea {
+  min-height: 160px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  resize: vertical;
+  font: inherit;
+  line-height: 1.55;
+}
+.ghost {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 .guide-kicker { margin: 0 0 10px; }
 .steps { margin: 0; padding-left: 1.2em; }
@@ -172,7 +195,8 @@ footer a { color: var(--red); }
 .poster ul { margin-top: 28px; padding: 0; list-style: none; font-size: 20px; }
 .poster li { margin: 8px 0; }
 @media (max-width: 980px) {
-  .top, .layout, .guide, footer { padding-left: 16px; padding-right: 16px; }
+  .top, .layout, .guide, .intake, footer { padding-left: 16px; padding-right: 16px; }
+  .forms { grid-template-columns: 1fr; }
   .top { flex-direction: column; }
   .meta { text-align: left; }
   .layout { display: flex; flex-direction: column; }
