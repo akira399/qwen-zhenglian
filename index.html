@@ -4,50 +4,69 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>千问证链 · 答辩证据核对</title>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
   <header class="top">
     <div class="brand">
       <p class="eyebrow">效率进化 · 阿里云 Qwen 科研提效 · 个人初赛</p>
       <h1>千问证链</h1>
-      <p class="slogan">答辩前，核对哪些话没有出处。</p>
+      <p class="slogan">导入论文和答辩 PPT，得到一份能照着改的讲法。</p>
     </div>
     <div class="meta" id="meta"></div>
   </header>
 
   <section class="intake" id="intake">
-    <h2>把你要答辩的材料贴进来</h2>
-    <p>这个页面是给准备开题、中期或答辩的人用的。你关心的是自己的稿子：PPT 里写的话，材料里有没有依据。把下面四格换成你的开题报告、实验记录、导师批注和答辩备注，再点核对。</p>
-    <p>格子里先放了一份虚构样例，学生叫林夏，课题是食堂餐盘浪费识别。她的 PPT 写了 92.4，实验记录里是 86.1。不换文字，直接点核对，就能看见这种问题会被怎么标出来。</p>
-    <div class="forms" id="forms"></div>
-    <button type="button" id="check" class="run">核对这四份材料</button>
-    <p class="hint" id="check-note"></p>
+    <h2>导入论文和答辩 PPT</h2>
+    <p>准备答辩的人通常不会把材料摘成几行字。这里直接收两份文件：论文（或开题）和答辩 PPT。导师批注没有就可以不传。核对之后给你的不是问题清单了事，而是每一页建议改成的句子，以及一段能照着念的讲稿。</p>
+    <div class="drops">
+      <label class="drop">论文或开题
+        <input id="paper-file" type="file" accept=".pdf,.docx,.txt,.md,application/pdf" />
+        <span id="paper-name">PDF、Word 或 TXT</span>
+      </label>
+      <label class="drop">答辩 PPT
+        <input id="slide-file" type="file" accept=".pptx,.pdf,.txt,.md,application/pdf" />
+        <span id="slide-name">PPTX、PDF 或 TXT</span>
+      </label>
+      <label class="drop">导师批注，可选
+        <input id="mentor-file" type="file" accept=".pdf,.docx,.txt,.md,application/pdf" />
+        <span id="mentor-name">没有就留空</span>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="button" id="check" class="run">根据我的文件生成修改方案</button>
+      <button type="button" id="use-sample" class="ghost">先用一份演示论文和 PPT 看效果</button>
+    </div>
+    <p class="hint" id="check-note">演示文件是虚构的：学生林夏，PPT 写了 92.4，论文里的实验结果是 86.1。用来看「该怎么改」，不是让你阅读她的课题。</p>
   </section>
 
   <section class="guide" id="workspace-guide" hidden>
     <p class="guide-kicker" id="notice"></p>
-    <ol class="steps">
-      <li><b>点「从这里开始」。</b>红色是这份稿子里不能直接讲的话。</li>
-      <li><b>看②里标色的原句。</b>红是两边打架，绿是对得上。</li>
-      <li><b>看③里划掉的句子。</b>那些话先别说。</li>
-    </ol>
-    <p class="legend"><span class="swatch conflict"></span>说法冲突 <span class="swatch missing"></span>材料里没有 <span class="swatch supported"></span>有证据 <span class="swatch withheld"></span>先别讲</p>
-    <button type="button" id="back" class="ghost">返回修改材料</button>
+    <button type="button" id="back" class="ghost">重新导入</button>
+  </section>
+
+  <section class="answer" id="answer" hidden>
+    <h2>建议改成这样</h2>
+    <div id="edits"></div>
+    <h2>可以照着念</h2>
+    <ol id="script"></ol>
+    <button type="button" id="copy-script" class="ghost">复制讲稿</button>
+    <h2>还没做的，答辩时怎么说</h2>
+    <ul id="todo"></ul>
   </section>
 
   <main class="layout" id="workspace" hidden>
     <section class="col claims-col">
       <div class="col-head">
-        <h2>① 先点一条红色问题</h2>
-        <p class="hint">点下去之后，②里会标出对应原句。</p>
+        <h2>依据</h2>
+        <p class="hint">改完之后，可以点开看原句。</p>
       </div>
       <div id="claims"></div>
     </section>
 
     <section class="col paper">
       <div class="col-head">
-        <h2>② 原句出现在这里</h2>
+        <h2>原文</h2>
         <div class="tabs" id="tabs"></div>
       </div>
       <article id="doc" class="doc"></article>
@@ -55,7 +74,7 @@
 
     <section class="col result-col">
       <div class="col-head">
-        <h2>③ 这些话先别讲</h2>
+        <h2>旧提纲</h2>
       </div>
       <h3>导师对账</h3>
       <div id="mentor"></div>
@@ -68,6 +87,7 @@
     <p>样例课题为原创虚构。林夏不是参赛者。引用必须在原文中定位，定位失败不会显示为已证实。</p>
     <p><a href="poster.html">投稿封面</a></p>
   </footer>
-  <script src="app.js?v=5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
