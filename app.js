@@ -41,30 +41,77 @@ async function loadDemo() {
   }
 }
 
-function renderIntake() {
-  $("forms").innerHTML = state.docs.map((doc) => `
-    <label>
-      <span>${esc(doc.title)}</span>
-      <textarea data-input="${doc.id}">${esc(doc.text)}</textarea>
-    </label>
-  `).join("");
+const SAMPLE_REVISION = {
+  edits: [
+    {
+      page: "第4页",
+      remove: "验证集 mAP@0.5 达到 92.4，优于对比模型。",
+      replace: "验证集 240 张。自研模型 mAP@0.5 是 86.1，MobileNet-SSD 是 79.4。",
+      why: "92.4 在论文里不存在。86.1 才是最后一次完整实验。",
+    },
+    {
+      page: "第5页",
+      remove: "图3-2 食堂高峰时段浪费热力图已完成，11:30 浪费最高。",
+      replace: "高峰热力图还没画，这次不讲具体时段。下一步会单独成图。",
+      why: "论文写明没有热力图文件。",
+    },
+    {
+      page: "第2页",
+      remove: "本系统已在两个食堂档口试运行。",
+      replace: "目前只在离线验证集上测试，还没有进食堂。",
+      why: "论文没有试运行记录。",
+    },
+    {
+      page: "第6页",
+      remove: "创新点「高峰热力图」已交付。",
+      replace: "热力图还在计划里，这次不作为已完成的创新点。",
+      why: "和实验记录相反。",
+    },
+  ],
+  script: [
+    "食堂现在只知道倒掉总量，不知道哪个窗口、哪个时段浪费最高。",
+    "我们用档口俯视画面，识别明显没吃完就被倒掉的餐盘。",
+    "验证集 240 张。自研检测器 mAP@0.5 是 86.1，MobileNet-SSD 是 79.4。",
+    "对比目前只有 MobileNet-SSD。YOLOv8n 还没做，所以不讲已经超过主流检测器。",
+    "热力图和食堂试运行都还没做。接下来补对比实验，并把热力图单独画出来。",
+  ],
+  todo: [
+    "YOLOv8n 没做之前，不要讲对比已经充分。",
+    "热力图画出来之前，不要讲 11:30 浪费最高。",
+    "没进食堂之前，不要讲试运行。",
+  ],
+};
+
+function docText(id) {
+  return state.docs.find((item) => item.id === id)?.text || "";
 }
 
-function textsMatchSample() {
-  return state.docs.every((doc) => {
-    const box = document.querySelector(`[data-input="${doc.id}"]`);
-    return box && box.value.trim() === doc.text.trim();
-  });
+function samplePaper() {
+  return `${docText("proposal")}\n${docText("experiment")}`;
 }
 
-function showWorkspace(data) {
+function showAnswer(revision, summary) {
   $("intake").hidden = true;
   $("workspace-guide").hidden = false;
+  $("answer").hidden = false;
   $("workspace").hidden = false;
-  $("notice").textContent = data.analysis
-    ? `这是格子里这份材料的核对结果。${data.analysis.result.summary}`
-    : "还没有核对结果。";
-  renderMeta(data);
+  $("notice").textContent = summary;
+  $("meta").innerHTML = `<div>修改方案</div><div class="foot">先改红字那几页，再按讲稿念。</div>`;
+  $("edits").innerHTML = revision.edits.map((item) => `
+    <article class="edit">
+      <b>${esc(item.page)}</b>
+      <p class="remove">删掉：${esc(item.remove)}</p>
+      <p class="replace">改成：${esc(item.replace)}</p>
+      <p class="why">${esc(item.why)}</p>
+      <button type="button" class="ghost copy-edit">复制改后的句子</button>
+    </article>
+  `).join("");
+  $("edits").querySelectorAll(".copy-edit").forEach((button, index) => {
+    button.addEventListener("click", () => navigator.clipboard.writeText(revision.edits[index].replace));
+  });
+  $("script").innerHTML = revision.script.map((line) => `<li>${esc(line)}</li>`).join("");
+  $("todo").innerHTML = revision.todo.map((line) => `<li>${esc(line)}</li>`).join("");
+  $("copy-script").onclick = () => navigator.clipboard.writeText(revision.script.join("\n"));
   renderSide();
   renderTabs();
   renderDoc();
@@ -73,10 +120,112 @@ function showWorkspace(data) {
 function showIntake() {
   $("intake").hidden = false;
   $("workspace-guide").hidden = true;
+  $("answer").hidden = true;
   $("workspace").hidden = true;
   state.hasClicked = false;
   state.activeClaim = null;
-  $("meta").innerHTML = `<div>先放材料，再核对</div><div class="foot">格子里的文字可以整段换成你自己的。</div>`;
+  $("meta").innerHTML = `<div>导入两份文件</div><div class="foot">论文一份，答辩 PPT 一份。导师批注可以没有。</div>`;
+}
+
+function guessPage(line) {
+  const found = line.match(/第\d+页/);
+  return found ? found[0] : "PPT";
+}
+
+function localRevise(paper, slides) {
+  const edits = [];
+  const seen = new Set();
+  const lines = slides.split(/\n|。/).map((item) => item.trim()).filter((item) => item.length >= 8);
+  const paperNums = new Set(paper.match(/\d+\.\d+/g) || []);
+  lines.forEach((line) => {
+    const missing = [...new Set((line.match(/\d+\.\d+/g) || []).filter((num) => !paperNums.has(num)))];
+    if (missing.length && !seen.has(line)) {
+      seen.add(line);
+      const known = [...new Set(paper.match(/\d+\.\d+/g) || [])];
+      edits.push({
+        page: guessPage(line),
+        remove: line,
+        replace: known.length
+          ? `不要讲 ${missing.join("、")}。论文里的小数是 ${known.join("、")}，改用论文中的数字。`
+          : `不要讲 ${missing.join("、")}。论文里没有这个数字，删掉或改成「尚未得到该结果」。`,
+        why: "这个数字只出现在 PPT。",
+      });
+    }
+    const boast = ["已完成", "已交付", "试运行", "已部署"].find((word) => line.includes(word));
+    const paperDenies = /没有|尚未|未绘制|没有进入|还没/.test(paper);
+    if (boast && paperDenies && !seen.has(`boast:${line}`)) {
+      seen.add(`boast:${line}`);
+      edits.push({
+        page: guessPage(line),
+        remove: line,
+        replace: "改口：这一项还没有做完。这次只讲已经做完的实验，其余说下一步。",
+        why: "PPT 写成已经完成，论文里有相反说法。",
+      });
+    }
+  });
+  const script = [
+    "先讲论文里已经写明的问题和数据。",
+    "PPT 里论文没有的数字，全部不要念。",
+    edits[0] ? edits[0].replace : "没有发现 PPT 独有的数字。",
+    "还没做完的部分，说「下一步做」，不要说「已经完成」。",
+  ];
+  const todo = edits.length
+    ? ["先改上面这些页，再排练。", "导师批注如果后来补了，可以再导一次。"]
+    : ["论文和 PPT 里没有发现明显的数字冲突。仍建议人工看一遍「已完成」这类句子。"];
+  return { edits, script, todo };
+}
+
+async function readZipText(file, pattern, mapXml) {
+  if (typeof JSZip === "undefined") throw new Error("读取 PPT 的组件没加载成功，请改用 TXT 或 PDF。");
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  const names = Object.keys(zip.files).filter((name) => pattern.test(name)).sort();
+  const parts = [];
+  for (const name of names) {
+    const xml = await zip.files[name].async("string");
+    parts.push(mapXml(xml, name));
+  }
+  return parts.filter(Boolean).join("\n");
+}
+
+function xmlText(xml) {
+  return [...xml.matchAll(/<a:t[^>]*>([^<]*)<\/a:t>/g)].map((item) => item[1]).join("");
+}
+
+async function readFile(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".txt") || name.endsWith(".md")) return file.text();
+  if (name.endsWith(".pptx")) {
+    return readZipText(file, /ppt\/slides\/slide\d+\.xml$/, (xml, slide) => {
+      const page = slide.match(/slide(\d+)/)?.[1] || "";
+      const text = xmlText(xml);
+      return text ? `第${page}页：${text}` : "";
+    });
+  }
+  if (name.endsWith(".docx")) {
+    return readZipText(file, /word\/document\.xml$/, (xml) => xml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+  }
+  if (name.endsWith(".pdf")) return readPdf(file);
+  throw new Error("请上传 PDF、PPTX、DOCX 或 TXT。");
+}
+
+async function readPdf(file) {
+  const pdfjs = await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.worker.min.mjs";
+  const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i += 1) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((item) => item.str).join(""));
+  }
+  return pages.join("\n");
+}
+
+function showWorkspace(data, revision, summary, ownFiles) {
+  state.analysis = ownFiles ? null : data.analysis;
+  state.docs = data.docs;
+  showAnswer(revision, summary);
+  $("workspace").hidden = Boolean(ownFiles) || !state.analysis;
 }
 
 async function load() {
@@ -84,28 +233,63 @@ async function load() {
   state.demo = data;
   state.docs = data.docs;
   state.analysis = data.analysis;
-  state.activeClaim = null;
-  state.mentorIndex = null;
-  renderIntake();
   showIntake();
+  $("paper-file").addEventListener("change", (event) => {
+    state.paperFile = event.target.files[0] || null;
+    $("paper-name").textContent = state.paperFile ? state.paperFile.name : "PDF、Word 或 TXT";
+  });
+  $("slide-file").addEventListener("change", (event) => {
+    state.slideFile = event.target.files[0] || null;
+    $("slide-name").textContent = state.slideFile ? state.slideFile.name : "PPTX、PDF 或 TXT";
+  });
+  $("mentor-file").addEventListener("change", (event) => {
+    state.mentorFile = event.target.files[0] || null;
+    $("mentor-name").textContent = state.mentorFile ? state.mentorFile.name : "没有就留空";
+  });
+  $("use-sample").addEventListener("click", () => {
+    state.docs = state.demo.docs;
+    showWorkspace(
+      state.demo,
+      SAMPLE_REVISION,
+      "这是演示稿的修改方案。林夏的 PPT 不能照原样讲，下面是建议改成的句子。",
+    );
+  });
   $("check").addEventListener("click", onCheck);
   $("back").addEventListener("click", showIntake);
 }
 
 async function onCheck() {
   const note = $("check-note");
-  if (!textsMatchSample()) {
-    if (state.demo.snapshot) {
-      note.textContent = "这四格已经和样例不一样。公开页面没有放置密钥，不能把你的新材料发去千问。要看核对长什么样，先不要改字，直接核对这份样例。换成你自己的材料，需要在本机打开带密钥的版本。";
-      return;
-    }
-    note.textContent = "本机版目前只核对本页自带的样例。把文字改回样例后再点核对。";
+  if (!state.paperFile || !state.slideFile) {
+    note.textContent = "请先选论文和答辩 PPT。导师批注可以不传。也可以先点「用演示论文和 PPT」。";
     return;
   }
-  note.textContent = "正在打开这份样例的核对结果…";
+  note.textContent = "正在读取文件…";
   $("check").disabled = true;
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  showWorkspace(state.demo);
+  try {
+    const paper = await readFile(state.paperFile);
+    const slides = await readFile(state.slideFile);
+    const mentor = state.mentorFile ? await readFile(state.mentorFile) : "";
+    const combined = `${paper}\n${mentor}`;
+    state.docs = [
+      { id: "proposal", title: "论文", filename: state.paperFile.name, text: paper },
+      { id: "experiment", title: "论文续", filename: state.paperFile.name, text: "" },
+      { id: "mentor", title: "导师批注", filename: state.mentorFile?.name || "无", text: mentor || "未提供导师批注。" },
+      { id: "slides", title: "答辩PPT", filename: state.slideFile.name, text: slides },
+    ];
+    state.analysis = state.demo.analysis;
+    const revision = localRevise(combined, slides);
+    if (!revision.edits.length) {
+      note.textContent = "读完了，没有发现 PPT 独有的数字，或「已完成」和论文相反的句子。可以展开下面人工再看。";
+    }
+    showWorkspace(
+      { ...state.demo, docs: state.docs, analysis: state.analysis },
+      revision,
+      `已从《${state.paperFile.name}》和《${state.slideFile.name}》抽出文字并生成修改建议。`,
+    );
+  } catch (error) {
+    note.textContent = error.message || "文件没有读出来。";
+  }
   $("check").disabled = false;
 }
 
