@@ -4,29 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>千问证链 · 答辩证据核对</title>
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
   <header class="top">
     <div class="brand">
       <p class="eyebrow">效率进化 · 阿里云 Qwen 科研提效 · 个人初赛</p>
       <h1>千问证链</h1>
-      <p class="slogan">没有出处的结论，不能进答辩稿。</p>
+      <p class="slogan">答辩前，核对哪些话没有出处。</p>
     </div>
     <div class="meta" id="meta"></div>
   </header>
 
-  <section class="guide" id="notice">
-    <p class="guide-kicker">不用登录，也不用上传。这是一份已经核对完的样例。</p>
+  <section class="intake" id="intake">
+    <h2>把你要答辩的材料贴进来</h2>
+    <p>这个页面是给准备开题、中期或答辩的人用的。你关心的是自己的稿子：PPT 里写的话，材料里有没有依据。把下面四格换成你的开题报告、实验记录、导师批注和答辩备注，再点核对。</p>
+    <p>格子里先放了一份虚构样例，学生叫林夏，课题是食堂餐盘浪费识别。她的 PPT 写了 92.4，实验记录里是 86.1。不换文字，直接点核对，就能看见这种问题会被怎么标出来。</p>
+    <div class="forms" id="forms"></div>
+    <button type="button" id="check" class="run">核对这四份材料</button>
+    <p class="hint" id="check-note"></p>
+  </section>
+
+  <section class="guide" id="workspace-guide" hidden>
+    <p class="guide-kicker" id="notice"></p>
     <ol class="steps">
-      <li><b>点「从这里开始」。</b>红色问题是答辩稿里不能直接讲的话。</li>
+      <li><b>点「从这里开始」。</b>红色是这份稿子里不能直接讲的话。</li>
       <li><b>看②里标色的原句。</b>红是两边打架，绿是对得上。</li>
       <li><b>看③里划掉的句子。</b>那些话先别说。</li>
     </ol>
     <p class="legend"><span class="swatch conflict"></span>说法冲突 <span class="swatch missing"></span>材料里没有 <span class="swatch supported"></span>有证据 <span class="swatch withheld"></span>先别讲</p>
+    <button type="button" id="back" class="ghost">返回修改材料</button>
   </section>
 
-  <main class="layout">
+  <main class="layout" id="workspace" hidden>
     <section class="col claims-col">
       <div class="col-head">
         <h2>① 先点一条红色问题</h2>
@@ -58,6 +68,6 @@
     <p>样例课题为原创虚构。林夏不是参赛者。引用必须在原文中定位，定位失败不会显示为已证实。</p>
     <p><a href="poster.html">投稿封面</a></p>
   </footer>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
