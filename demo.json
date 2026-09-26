@@ -1,0 +1,235 @@
+{
+  "product": "千问证链",
+  "slogan": "没有出处的结论，不能进答辩稿。",
+  "topic": "基于轻量检测的高校食堂餐盘浪费识别",
+  "person": "林夏",
+  "person_note": "演示数据中的虚构人物，不是参赛者",
+  "docs": [
+    {
+      "id": "proposal",
+      "title": "开题报告节选",
+      "filename": "01-开题报告.txt",
+      "text": "题目：基于轻量检测的高校食堂餐盘浪费识别。\n学生：林夏。本文件是演示数据，林夏是虚构人物。\n场景：食堂档口摄像头以俯视角度拍摄餐盘，识别明显未吃完就被倒掉的情况。\n要解决的问题：后勤只有倒掉总量，不知道哪个窗口、哪个时段浪费最高。\n预定主张一：自研轻量检测器可以在档口侧设备上实时运行。\n预定主张二：相比 MobileNet-SSD，它更适合俯视、遮挡多的餐盘画面。\n预定主张三：系统输出高峰时段浪费热力图，供后勤调整供餐。\n评价方式：在自建验证集上报告 mAP@0.5，并与至少一个主流轻量检测器对比。"
+    },
+    {
+      "id": "experiment",
+      "title": "实验记录",
+      "filename": "02-实验记录.txt",
+      "text": "实验记录。日期：2026年4月2日。记录人：林夏。\n数据：自建验证集 240 张，全部是档口俯视画面。实验只在离线验证集完成，没有进入食堂试运行。\n结果：自研轻量检测器的 mAP@0.5 是 86.1。MobileNet-SSD 的 mAP@0.5 是 79.4。\n对比模型只有 MobileNet-SSD。没有做 YOLOv8n。\n本次没有绘制热力图，文件夹中没有热力图文件。\n记录里没有 90 以上的成绩。86.1 是最后一次完整实验的结果。"
+    },
+    {
+      "id": "mentor",
+      "title": "导师批注",
+      "filename": "03-导师批注.txt",
+      "text": "导师批注。2026年4月9日。\n第一，对比实验请补 YOLOv8n。只和 MobileNet-SSD 比不够。\n第二，热力图请单独成图。开题里写了这一项，答辩时就要拿出图，不要只用文字带过。\n第三，最终数字请用最后一次完整实验，不要把某次最高分写成结论。"
+    },
+    {
+      "id": "slides",
+      "title": "答辩PPT备注",
+      "filename": "04-答辩PPT备注.txt",
+      "text": "答辩PPT备注。\n第2页：本系统已在两个食堂档口试运行。\n第4页：验证集 mAP@0.5 达到 92.4，优于对比模型。\n第5页：图3-2 食堂高峰时段浪费热力图已完成，11:30 浪费最高。\n第6页：创新点「高峰热力图」已交付。"
+    }
+  ],
+  "analysis": {
+    "model": "qwen-flash",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "created_at": "2026-09-26T17:44:57+08:00",
+    "usage": {
+      "completion_tokens": 1317,
+      "prompt_tokens": 1018,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 2335
+    },
+    "estimated_yuan": 0.002128,
+    "acceptance_errors": [],
+    "result": {
+      "claims": [
+        {
+          "id": "c1",
+          "text": "自研轻量检测器可以在档口侧设备上实时运行。",
+          "status": "missing",
+          "gap": "",
+          "evidence": []
+        },
+        {
+          "id": "c2",
+          "text": "相比 MobileNet-SSD，自研轻量检测器更适合俯视、遮挡多的餐盘画面。",
+          "status": "supported",
+          "gap": "",
+          "evidence": [
+            {
+              "doc": "experiment",
+              "quote": "自研轻量检测器的 mAP@0.5 是 86.1。MobileNet-SSD 的 mAP@0.5 是 79.4。",
+              "verified": true,
+              "doc_id": "experiment",
+              "start": 77,
+              "end": 132
+            }
+          ]
+        },
+        {
+          "id": "c3",
+          "text": "系统输出高峰时段浪费热力图，供后勤调整供餐。",
+          "status": "missing",
+          "gap": "实验记录中未绘制热力图，文件夹中无热力图文件。",
+          "evidence": []
+        },
+        {
+          "id": "c4",
+          "text": "验证集 mAP@0.5 达到 92.4，优于对比模型。",
+          "status": "conflict",
+          "gap": "实验记录显示 mAP@0.5 为 86.1，PPT称92.4，数字不一致。",
+          "evidence": [
+            {
+              "doc": "experiment",
+              "quote": "自研轻量检测器的 mAP@0.5 是 86.1。",
+              "verified": true,
+              "doc_id": "experiment",
+              "start": 77,
+              "end": 101
+            },
+            {
+              "doc": "slides",
+              "quote": "验证集 mAP@0.5 达到 92.4，优于对比模型。",
+              "verified": true,
+              "doc_id": "slides",
+              "start": 33,
+              "end": 60
+            }
+          ]
+        },
+        {
+          "id": "c5",
+          "text": "图3-2 食堂高峰时段浪费热力图已完成，11:30 浪费最高。",
+          "status": "conflict",
+          "gap": "实验记录中未绘制热力图，文件夹中无热力图文件，与PPT描述冲突。",
+          "evidence": [
+            {
+              "doc": "experiment",
+              "quote": "本次没有绘制热力图，文件夹中没有热力图文件。",
+              "verified": true,
+              "doc_id": "experiment",
+              "start": 167,
+              "end": 189
+            },
+            {
+              "doc": "slides",
+              "quote": "图3-2 食堂高峰时段浪费热力图已完成，11:30 浪费最高。",
+              "verified": true,
+              "doc_id": "slides",
+              "start": 65,
+              "end": 96
+            }
+          ]
+        },
+        {
+          "id": "c6",
+          "text": "本系统已在两个食堂档口试运行。",
+          "status": "conflict",
+          "gap": "实验记录明确说明实验只在离线验证集完成，未进入食堂试运行，与PPT描述冲突。",
+          "evidence": [
+            {
+              "doc": "experiment",
+              "quote": "实验只在离线验证集完成，没有进入食堂试运行。",
+              "verified": true,
+              "doc_id": "experiment",
+              "start": 51,
+              "end": 73
+            },
+            {
+              "doc": "slides",
+              "quote": "本系统已在两个食堂档口试运行。",
+              "verified": true,
+              "doc_id": "slides",
+              "start": 13,
+              "end": 28
+            }
+          ]
+        },
+        {
+          "id": "c7",
+          "text": "最终数字请用最后一次完整实验，不要把某次最高分写成结论。",
+          "status": "missing",
+          "gap": "材料中未提及‘某次最高分’或‘最后一次完整实验’的具体数值，无法判断是否遵循。",
+          "evidence": []
+        }
+      ],
+      "mentor_items": [
+        {
+          "text": "对比实验请补 YOLOv8n。只和 MobileNet-SSD 比不够。",
+          "status": "open",
+          "proof": "本次没有绘制热力图，文件夹中没有热力图文件。",
+          "verified": true,
+          "doc_id": "experiment",
+          "start": 167,
+          "end": 189,
+          "aligned": false
+        },
+        {
+          "text": "热力图请单独成图。开题里写了这一项，答辩时就要拿出图，不要只用文字带过。",
+          "status": "open",
+          "proof": "本次没有绘制热力图，文件夹中没有热力图文件。",
+          "verified": true,
+          "doc_id": "experiment",
+          "start": 167,
+          "end": 189,
+          "aligned": true
+        },
+        {
+          "text": "最终数字请用最后一次完整实验，不要把某次最高分写成结论。",
+          "status": "open",
+          "proof": "记录里没有 90 以上的成绩。86.1 是最后一次完整实验的结果。",
+          "verified": true,
+          "doc_id": "experiment",
+          "start": 190,
+          "end": 223,
+          "aligned": true
+        }
+      ],
+      "outline": [
+        {
+          "minute": "0:00-1:00",
+          "sentence": "本研究针对高校食堂餐盘浪费问题，提出基于轻量检测的识别方案。",
+          "status": "supported",
+          "ref": "c2"
+        },
+        {
+          "minute": "1:00-2:00",
+          "sentence": "实验结果显示，自研检测器在验证集上的 mAP@0.5 为 86.1，优于 MobileNet-SSD。",
+          "status": "supported",
+          "ref": "c2"
+        },
+        {
+          "minute": "2:00-3:00",
+          "sentence": "系统将生成高峰时段浪费热力图，帮助后勤优化供餐安排。",
+          "status": "withheld",
+          "ref": ""
+        },
+        {
+          "minute": "3:00-4:00",
+          "sentence": "目前系统已部署于两个食堂档口进行试运行。",
+          "status": "withheld",
+          "ref": ""
+        },
+        {
+          "minute": "4:00-5:00",
+          "sentence": "我们已实现 mAP@0.5 达到 92.4，并完成了高峰时段热力图分析。",
+          "status": "withheld",
+          "ref": ""
+        }
+      ],
+      "summary": "PPT中mAP与实验数据不符，热力图未完成却声称已交付，试运行未实际开展，存在严重证据冲突风险。"
+    }
+  },
+  "snapshot": true,
+  "budget": {
+    "calls": 0,
+    "estimated_yuan": 0.002128,
+    "prompt_tokens": 1018,
+    "max_calls": null,
+    "max_yuan": null,
+    "blocked": null
+  }
+}

@@ -1,0 +1,161 @@
+:root {
+  --ink: #1c1915;
+  --muted: #6d655c;
+  --paper: #f6f1e8;
+  --card: #fffdf8;
+  --line: #e4d9c8;
+  --red: #c4121a;
+  --red-soft: #f8d6d4;
+  --green: #1d6b45;
+  --green-soft: #d7f0e2;
+  --amber: #8a5a12;
+  --amber-soft: #f8e7c4;
+  --header: #141210;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+button, a { font: inherit; }
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px 22px;
+  background: var(--header);
+  color: #f6f1e8;
+}
+.eyebrow {
+  margin: 0 0 8px;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: #e7b4b0;
+}
+h1 {
+  margin: 0;
+  font-family: "Palatino Linotype", "Songti SC", serif;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.slogan { margin: 8px 0 0; font-size: 16px; }
+.meta {
+  min-width: 240px;
+  text-align: right;
+  font-size: 13px;
+  color: #d9d0c4;
+}
+.meta button, .run {
+  margin-top: 10px;
+  border: 0;
+  background: var(--red);
+  color: white;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.meta button:disabled, .run:disabled { opacity: 0.6; cursor: wait; }
+.notice {
+  margin: 16px 32px 0;
+  padding: 12px 16px;
+  background: white;
+  border-left: 4px solid var(--red);
+}
+.layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr 0.9fr;
+  gap: 16px;
+  padding: 16px 32px 32px;
+}
+.col {
+  background: var(--card);
+  border: 1px solid var(--line);
+  min-height: 640px;
+  padding: 16px 18px 24px;
+}
+.col-head { margin-bottom: 8px; }
+h2, h3 { margin: 0 0 8px; font-size: 16px; }
+h3 { margin-top: 18px; }
+.hint, .foot, footer { color: var(--muted); font-size: 13px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button, .claim, .mentor-item, .outline li {
+  border: 1px solid var(--line);
+  background: #fff;
+  text-align: left;
+}
+.tabs button {
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.tabs button.active { border-color: var(--ink); background: var(--ink); color: white; }
+.doc {
+  white-space: pre-wrap;
+  font-size: 14px;
+  padding-top: 8px;
+}
+mark { padding: 0 2px; }
+.mark-conflict { background: var(--red-soft); }
+.mark-missing { background: var(--amber-soft); }
+.mark-supported, .mark-open, .mark-done { background: var(--green-soft); }
+.claim, .mentor-item {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.claim small, .mentor-item small, .outline small {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.st-conflict { color: var(--red); }
+.st-missing, .st-withheld, .st-open { color: var(--amber); }
+.st-supported, .st-done { color: var(--green); }
+.claim.active { border-color: var(--ink); }
+.gap { margin: 6px 0 0; color: var(--red); }
+.quote-miss { color: var(--muted); font-size: 12px; }
+#outline { margin: 0; padding: 0; list-style: none; }
+.outline li {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+#outline li.withheld .sentence { text-decoration: line-through; text-decoration-color: var(--red); }
+footer { padding: 0 32px 28px; }
+footer a { color: var(--red); }
+.empty { padding: 12px 0; }
+.poster-body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--header);
+}
+.poster {
+  width: 100%;
+  min-height: 100vh;
+  padding: 72px 80px;
+  color: #f6f1e8;
+  background:
+    linear-gradient(135deg, rgba(196, 18, 26, 0.95), rgba(196, 18, 26, 0.2) 28%, transparent 29%),
+    #141210;
+}
+.poster h1 { font-size: 84px; }
+.poster ul { margin-top: 28px; padding: 0; list-style: none; font-size: 20px; }
+.poster li { margin: 8px 0; }
+@media (max-width: 980px) {
+  .top, .layout, .notice, footer { padding-left: 16px; padding-right: 16px; }
+  .top { flex-direction: column; }
+  .meta { text-align: left; }
+  .layout { grid-template-columns: 1fr; }
+  .col { min-height: 0; }
+  h1 { font-size: 36px; }
+  .poster h1 { font-size: 48px; }
+  .poster { padding: 32px; }
+}
