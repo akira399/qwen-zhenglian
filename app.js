@@ -41,44 +41,79 @@ async function loadDemo() {
   }
 }
 
-async function load() {
-  const data = await loadDemo();
-  state.docs = data.docs;
-  state.analysis = data.analysis;
-  state.activeClaim = null;
-  state.mentorIndex = null;
-  const summary = data.analysis?.result.summary;
-  const lead = $("notice").querySelector(".guide-kicker");
-  if (lead && summary) {
-    lead.textContent = `样例课题「${data.topic}」。${summary}`;
-  }
+function renderIntake() {
+  $("forms").innerHTML = state.docs.map((doc) => `
+    <label>
+      <span>${esc(doc.title)}</span>
+      <textarea data-input="${doc.id}">${esc(doc.text)}</textarea>
+    </label>
+  `).join("");
+}
+
+function textsMatchSample() {
+  return state.docs.every((doc) => {
+    const box = document.querySelector(`[data-input="${doc.id}"]`);
+    return box && box.value.trim() === doc.text.trim();
+  });
+}
+
+function showWorkspace(data) {
+  $("intake").hidden = true;
+  $("workspace-guide").hidden = false;
+  $("workspace").hidden = false;
+  $("notice").textContent = data.analysis
+    ? `这是格子里这份材料的核对结果。${data.analysis.result.summary}`
+    : "还没有核对结果。";
   renderMeta(data);
   renderSide();
   renderTabs();
   renderDoc();
 }
 
-function renderMeta(data) {
-  const analysis = data.analysis;
-  if (data.snapshot) {
-    $("meta").innerHTML = `
-      <div>千问已核对这份样例</div>
-      <div class="foot">直接点红色问题，不用再上传。</div>
-    `;
+function showIntake() {
+  $("intake").hidden = false;
+  $("workspace-guide").hidden = true;
+  $("workspace").hidden = true;
+  state.hasClicked = false;
+  state.activeClaim = null;
+  $("meta").innerHTML = `<div>先放材料，再核对</div><div class="foot">格子里的文字可以整段换成你自己的。</div>`;
+}
+
+async function load() {
+  const data = await loadDemo();
+  state.demo = data;
+  state.docs = data.docs;
+  state.analysis = data.analysis;
+  state.activeClaim = null;
+  state.mentorIndex = null;
+  renderIntake();
+  showIntake();
+  $("check").addEventListener("click", onCheck);
+  $("back").addEventListener("click", showIntake);
+}
+
+async function onCheck() {
+  const note = $("check-note");
+  if (!textsMatchSample()) {
+    if (state.demo.snapshot) {
+      note.textContent = "这四格已经和样例不一样。公开页面没有放置密钥，不能把你的新材料发去千问。要看核对长什么样，先不要改字，直接核对这份样例。换成你自己的材料，需要在本机打开带密钥的版本。";
+      return;
+    }
+    note.textContent = "本机版目前只核对本页自带的样例。把文字改回样例后再点核对。";
     return;
   }
-  const spent = data.budget;
-  const bits = [
-    `已调用 ${spent.calls} 次`,
-    `估算 ${Number(spent.estimated_yuan).toFixed(4)} 元`,
-  ];
-  if (analysis) bits.unshift(analysis.model);
+  note.textContent = "正在打开这份样例的核对结果…";
+  $("check").disabled = true;
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  showWorkspace(state.demo);
+  $("check").disabled = false;
+}
+
+function renderMeta() {
   $("meta").innerHTML = `
-    <div>${bits.map(esc).join(" · ")}</div>
-    <button id="run" ${spent.blocked ? "disabled" : ""}>${analysis ? "重新核对" : "开始核对"}</button>
-    <div class="foot">${spent.blocked ? esc(spent.blocked) : "重新核对称会再请求一次千问。"}</div>
+    <div>核对结果</div>
+    <div class="foot">红色是这份稿子里不能直接讲的话。</div>
   `;
-  $("run").addEventListener("click", onRun);
 }
 
 async function onRun() {
