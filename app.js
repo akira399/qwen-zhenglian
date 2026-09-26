@@ -13,6 +13,7 @@ const state = {
   analysis: null,
   activeClaim: null,
   mentorIndex: null,
+  hasClicked: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -46,9 +47,11 @@ async function load() {
   state.analysis = data.analysis;
   state.activeClaim = null;
   state.mentorIndex = null;
-  $("notice").textContent = data.analysis
-    ? data.analysis.result.summary
-    : `样例课题「${data.topic}」已备好。点一次，千问会核对主张、导师要求和答辩提纲。页面刷新不会再次扣费。`;
+  const summary = data.analysis?.result.summary;
+  const lead = $("notice").querySelector(".guide-kicker");
+  if (lead && summary) {
+    lead.textContent = `样例课题「${data.topic}」。${summary}`;
+  }
   renderMeta(data);
   renderSide();
   renderTabs();
@@ -59,8 +62,8 @@ function renderMeta(data) {
   const analysis = data.analysis;
   if (data.snapshot) {
     $("meta").innerHTML = `
-      <div>${esc(analysis?.model || "qwen-flash")} · 已核验</div>
-      <div class="foot">这是初赛提交版，打开页面不会再请求模型。</div>
+      <div>千问已核对这份样例</div>
+      <div class="foot">直接点红色问题，不用再上传。</div>
     `;
     return;
   }
@@ -131,14 +134,11 @@ function renderSide() {
     $("outline").innerHTML = "";
     return;
   }
-  if (!state.activeClaim && state.mentorIndex == null && result.claims.length) {
-    state.activeClaim = orderedClaims()[0].id;
-    const first = result.claims.find((item) => item.id === state.activeClaim);
-    const hit = (first?.evidence || []).find((item) => item.verified);
-    if (hit) state.docId = hit.doc_id;
-  }
-  $("claims").innerHTML = orderedClaims().map((claim) => `
-    <button type="button" class="claim ${claim.id === state.activeClaim ? "active" : ""}" data-claim="${esc(claim.id)}">
+  const claims = orderedClaims();
+  const firstConflict = claims.find((item) => item.status === "conflict");
+  $("claims").innerHTML = claims.map((claim) => `
+    <button type="button" class="claim ${claim.id === state.activeClaim ? "active" : ""} ${!state.hasClicked && firstConflict && claim.id === firstConflict.id ? "start-here" : ""}" data-claim="${esc(claim.id)}">
+      ${!state.hasClicked && firstConflict && claim.id === firstConflict.id ? `<b class="start-label">从这里开始</b>` : ""}
       <small class="st-${claim.status}">${STATUS[claim.status] || claim.status}</small>
       <span>${esc(claim.text)}</span>
       ${claim.gap ? `<p class="gap">${esc(claim.gap)}</p>` : ""}
@@ -179,6 +179,7 @@ function unverifiedNote(evidence) {
 }
 
 function selectClaim(id) {
+  state.hasClicked = true;
   state.mentorIndex = null;
   state.activeClaim = id;
   const claim = (state.analysis?.result.claims || []).find((item) => item.id === id);

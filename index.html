@@ -16,28 +16,36 @@
     <div class="meta" id="meta"></div>
   </header>
 
-  <section class="notice" id="notice"></section>
+  <section class="guide" id="notice">
+    <p class="guide-kicker">不用登录，也不用上传。这是一份已经核对完的样例。</p>
+    <ol class="steps">
+      <li><b>点「从这里开始」。</b>红色问题是答辩稿里不能直接讲的话。</li>
+      <li><b>看②里标色的原句。</b>红是两边打架，绿是对得上。</li>
+      <li><b>看③里划掉的句子。</b>那些话先别说。</li>
+    </ol>
+    <p class="legend"><span class="swatch conflict"></span>说法冲突 <span class="swatch missing"></span>材料里没有 <span class="swatch supported"></span>有证据 <span class="swatch withheld"></span>先别讲</p>
+  </section>
 
   <main class="layout">
+    <section class="col claims-col">
+      <div class="col-head">
+        <h2>① 先点一条红色问题</h2>
+        <p class="hint">点下去之后，②里会标出对应原句。</p>
+      </div>
+      <div id="claims"></div>
+    </section>
+
     <section class="col paper">
       <div class="col-head">
-        <h2>材料</h2>
+        <h2>② 原句出现在这里</h2>
         <div class="tabs" id="tabs"></div>
       </div>
       <article id="doc" class="doc"></article>
     </section>
 
-    <section class="col">
+    <section class="col result-col">
       <div class="col-head">
-        <h2>主张</h2>
-        <p class="hint">点一条，左边跳到原文。</p>
-      </div>
-      <div id="claims"></div>
-    </section>
-
-    <section class="col">
-      <div class="col-head">
-        <h2>能讲与不能讲</h2>
+        <h2>③ 这些话先别讲</h2>
       </div>
       <h3>导师对账</h3>
       <div id="mentor"></div>
