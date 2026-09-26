@@ -97,7 +97,13 @@ function showAnswer(revision, summary) {
   $("workspace").hidden = false;
   $("notice").textContent = summary;
   $("meta").innerHTML = `<div>修改方案</div><div class="foot">先改红字那几页，再按讲稿念。</div>`;
-  $("edits").innerHTML = revision.edits.map((item) => `
+  const edits = revision.edits.length ? revision.edits : [{
+    page: "整份答辩",
+    remove: "没有发现需要删掉的结果数字。",
+    replace: "可以按现有 PPT 讲。念到的 EM、mAP、准确率，以论文里的数字为准。",
+    why: "PPT 里的结果数字能在论文里找到，图号和参考文献编号没有当成结果。",
+  }];
+  $("edits").innerHTML = edits.map((item) => `
     <article class="edit">
       <b>${esc(item.page)}</b>
       <p class="remove">删掉：${esc(item.remove)}</p>
@@ -107,7 +113,7 @@ function showAnswer(revision, summary) {
     </article>
   `).join("");
   $("edits").querySelectorAll(".copy-edit").forEach((button, index) => {
-    button.addEventListener("click", () => navigator.clipboard.writeText(revision.edits[index].replace));
+    button.addEventListener("click", () => navigator.clipboard.writeText(edits[index].replace));
   });
   $("script").innerHTML = revision.script.map((line) => `<li>${esc(line)}</li>`).join("");
   $("todo").innerHTML = revision.todo.map((line) => `<li>${esc(line)}</li>`).join("");
@@ -132,47 +138,88 @@ function guessPage(line) {
   return found ? found[0] : "PPT";
 }
 
+function paperHasNumber(paper, num) {
+  const escaped = num.replace(".", "\\.");
+  return new RegExp(`(?<!\\d)${escaped}(?!\\d)`).test(paper);
+}
+
+function isDelta(line, index) {
+  return /差|降|升|高|低|优|约|近/.test(line.slice(Math.max(0, index - 4), index));
+}
+
+function isStructural(line, index) {
+  return /[图表式第章节.]/.test(line.slice(Math.max(0, index - 1), index));
+}
+
+function claimNumbers(line) {
+  const found = [];
+  const metric = line.match(/mAP(?:@0\.5)?|EM|F1|准确率|精确率|召回率/i);
+  if (metric) {
+    for (const match of line.matchAll(/\d+\.\d+/g)) {
+      const before = line.slice(Math.max(0, match.index - 1), match.index);
+      if (before === "@" || isDelta(line, match.index) || isStructural(line, match.index)) continue;
+      if (/^\d{4}\.\d{4,5}$/.test(match[0])) continue;
+      found.push({ label: metric[0], num: match[0] });
+    }
+    return found;
+  }
+  for (const match of line.matchAll(/(\d+\.\d+)\s*%/g)) {
+    if (isDelta(line, match.index) || isStructural(line, match.index)) continue;
+    found.push({ label: "百分比", num: match[1] });
+  }
+  return found;
+}
+
+function paperMetricValues(paper, label) {
+  const body = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [...paper.matchAll(new RegExp(`${body}[^\\d]{0,24}(\\d+\\.\\d+)`, "gi"))].map((item) => item[1]);
+}
+
+function shorten(text) {
+  const clean = text.replace(/^第\d+页：/, "").replace(/\s+/g, " ").trim();
+  return clean.length > 80 ? `${clean.slice(0, 80)}…` : clean;
+}
+
 function localRevise(paper, slides) {
   const edits = [];
   const seen = new Set();
-  const lines = slides.split(/\n|。/).map((item) => item.trim()).filter((item) => item.length >= 8);
-  const paperNums = new Set(paper.match(/\d+\.\d+/g) || []);
+  const lines = slides.split(/\n|。|；/).map((item) => item.trim()).filter((item) => item.length >= 8);
   lines.forEach((line) => {
-    const missing = [...new Set((line.match(/\d+\.\d+/g) || []).filter((num) => !paperNums.has(num)))];
-    if (missing.length && !seen.has(line)) {
-      seen.add(line);
-      const known = [...new Set(paper.match(/\d+\.\d+/g) || [])];
+    claimNumbers(line).forEach((claim) => {
+      if (paperHasNumber(paper, claim.num) || seen.has(claim.num)) return;
+      seen.add(claim.num);
+      const known = [...new Set(paperMetricValues(paper, claim.label))].filter((num) => num !== claim.num).slice(0, 2);
       edits.push({
         page: guessPage(line),
-        remove: line,
+        remove: shorten(line),
         replace: known.length
-          ? `不要讲 ${missing.join("、")}。论文里的小数是 ${known.join("、")}，改用论文中的数字。`
-          : `不要讲 ${missing.join("、")}。论文里没有这个数字，删掉或改成「尚未得到该结果」。`,
-        why: "这个数字只出现在 PPT。",
+          ? `不要讲 ${claim.label} ${claim.num}。论文里同一指标写的是 ${known.join("、")}。`
+          : `不要把 ${claim.label} ${claim.num} 当成论文里的结果。正文没有这个数字。`,
+        why: "这是结果数字，而且论文里对不上。",
       });
-    }
-    const boast = ["已完成", "已交付", "试运行", "已部署"].find((word) => line.includes(word));
-    const paperDenies = /没有|尚未|未绘制|没有进入|还没/.test(paper);
-    if (boast && paperDenies && !seen.has(`boast:${line}`)) {
-      seen.add(`boast:${line}`);
-      edits.push({
-        page: guessPage(line),
-        remove: line,
-        replace: "改口：这一项还没有做完。这次只讲已经做完的实验，其余说下一步。",
-        why: "PPT 写成已经完成，论文里有相反说法。",
-      });
-    }
+    });
+    const topic = ["热力图", "试运行", "部署", "YOLOv8n", "对比实验"].find((word) => line.includes(word));
+    const boast = ["已完成", "已交付", "试运行", "已部署"].some((word) => line.includes(word));
+    if (!topic || !boast || seen.has(topic)) return;
+    const denied = paper.split(/。|\n/).some((sentence) => sentence.includes(topic) && /没有|尚未|未绘制|没有进入|还没/.test(sentence));
+    if (!denied) return;
+    seen.add(topic);
+    edits.push({
+      page: guessPage(line),
+      remove: shorten(line),
+      replace: `${topic}还没有做完。答辩只讲论文里已经完成的部分，这一项改口说下一步。`,
+      why: `论文里写了还没有${topic}。`,
+    });
   });
-  const script = [
-    "先讲论文里已经写明的问题和数据。",
-    "PPT 里论文没有的数字，全部不要念。",
-    edits[0] ? edits[0].replace : "没有发现 PPT 独有的数字。",
-    "还没做完的部分，说「下一步做」，不要说「已经完成」。",
-  ];
+  const kept = lines.filter((line) => {
+    if (/答辩人|指导教师|目录/.test(line)) return false;
+    return claimNumbers(line).some((claim) => paperHasNumber(paper, claim.num) && !seen.has(claim.num));
+  }).map(shorten).slice(0, 4);
+  const script = kept.length ? kept : ["论文和 PPT 的结果数字对得上，可以按现在的 PPT 讲。"];
   const todo = edits.length
-    ? ["先改上面这些页，再排练。", "导师批注如果后来补了，可以再导一次。"]
-    : ["论文和 PPT 里没有发现明显的数字冲突。仍建议人工看一遍「已完成」这类句子。"];
-  return { edits, script, todo };
+    ? edits.slice(0, 4).map((item) => `${item.page}：${item.replace}`)
+    : ["没有发现需要改口的实验结果。数字以论文为准，按现有 PPT 排练即可。"];
+  return { edits: edits.slice(0, 6), script, todo };
 }
 
 async function readZipText(file, pattern, mapXml) {
@@ -209,8 +256,8 @@ async function readFile(file) {
 }
 
 async function readPdf(file) {
-  const pdfjs = await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs");
-  pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.worker.min.mjs";
+  const pdfjs = await import("./vendor/pdf.min.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.min.mjs";
   const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
   const pages = [];
   for (let i = 1; i <= pdf.numPages; i += 1) {
@@ -279,9 +326,7 @@ async function onCheck() {
     ];
     state.analysis = state.demo.analysis;
     const revision = localRevise(combined, slides);
-    if (!revision.edits.length) {
-      note.textContent = "读完了，没有发现 PPT 独有的数字，或「已完成」和论文相反的句子。可以展开下面人工再看。";
-    }
+      note.textContent = "";
     showWorkspace(
       { ...state.demo, docs: state.docs, analysis: state.analysis },
       revision,
